@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Plot Bazaar - RealTime Demo</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+<style>
+  :root{
+    --bg:#f6f8fb; --card:#fff; --primary:#0b6cf6; --accent:#ff577f; --muted:#6b7280;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,Roboto,Arial;background:linear-gradient(180deg,#f6f8fb,#eef3fb);color:#0f1724}
+  .app{max-width:1000px;margin:0 auto;min-height:10vh;padding:14px;display:flex;flex-direction:column;gap:12px}
+  
+  /* Header */
+  header.app-header{display:flex;align-items:center;justify-content:space-between}
+  .brand{display:flex;align-items:center;gap:10px}
+  .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--primary),#7ac3ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;box-shadow:0 6px 14px rgba(11,108,246,0.18)}
+  .three-dots{width:44px;height:44px;border-radius:10px;background:var(--card);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 18px rgba(16,24,40,0.08)}
+  .more-btn{position:relative}
+  .menu{position:absolute;right:0;top:56px;width:260px;background:var(--card);border-radius:12px;padding:8px;box-shadow:0 12px 30px rgba(10,20,60,0.12);display:none;z-index:40}
+  .menu.open{display:block}
+  .menu .item{display:flex;gap:10px;align-items:center;padding:8px;border-radius:8px;cursor:pointer}
+  .menu .item:hover{background:#f3f7ff}
+  .menu .item i{width:28px;text-align:center;color:var(--primary)}
+  
+  /* Search & Filters */
+  .search-card{background:var(--card);padding:12px;border-radius:12px;box-shadow:0 6px 18px rgba(10,20,60,0.04);display:flex;flex-direction:column;gap:8px;position:relative;}
+  
+  /* **UPDATED**: Search & location in the same row */
+  .search-filter-row{
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap; 
+  }
+  .search-input-wrapper{position: relative;display:flex;align-items:center;flex: 1; min-width: 150px;}
+  .search-input-wrapper input[type="text"]{flex:1;padding:12px 14px;border-radius:10px;border:1px solid #e6eefc;font-size:15px;min-width:150px; padding-right: 40px;}
+  .search-input-wrapper .search-icon {position: absolute; right: 10px; color: var(--muted); cursor: pointer;}
+  
+  /* UPDATED: Added new styles for `stateSelectBtn` to match `search-input-wrapper` */
+  .stateSelectBtn {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #e6eefc; /* Border like search input */
+      background: linear-gradient(180deg,#fff,#fafcff);
+      cursor: pointer;
+      font-size: 15px;
+      color: var(--muted);
+      white-space: nowrap;
+      justify-content: center;
+  }
+  .state-badge {font-weight: 600;color: #0f1724;}
+  
+  /* Cascading Panel for Location Filtering */
+  #cascadingPanel {
+    position: absolute;
+    top: calc(100% + 8px); /* Position it below the search card */
+    left: 0;
+    right: 0;
+    background: var(--card);
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(10,20,60,0.12);
+    z-index: 50;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+  }
+  #cascadingPanel.open {
+    display: flex;
+  }
+  #cascadingPanel .select-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  #cascadingPanel .select-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  #cascadingPanel label {
+    font-size: 14px;
+    color: #475569;
+    font-weight: 600;
+  }
+  #cascadingPanel select {
+    flex: 1;
+    min-width: 100px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #e6eefc;
+    background-color: #f9fbfd;
+    font-size: 15px;
+    color: #0f1724;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13%205.1L146.2%20202.7%2018.8%2074.5a17.6%2017.6%200%200%200-25.3%200c-6.7%206.7-6.7%2017.4%200%2024.1l130.6%20130.5c6.7%206.7%2017.4%206.7%2024.1%200l130.6-130.5c6.7-6.7%206.7-17.4%200-24.1a17.6%2017.6%200%200%200-12.9-5.1z%22%2F%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+  }
+  #cascadingPanel .actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  #cascadingPanel .actions .btn {
+    flex: 1;
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 10px;
+  }
+  
+  .filters{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{padding:8px 10px;background:rgba(255,255,255,0.6);border-radius:999px;font-size:13px;color:var(--muted)}
+  
+  /* icon grid */
+  .icon-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .icon-card{background:var(--card);padding:8px;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;cursor:pointer;box-shadow:0 8px 18px rgba(12,24,60,0.04)}
+  .icon-card img{width:44px;height:44px;border-radius:8px;object-fit:cover}
+  .icon-card small{font-size:12px;color:var(--muted)}
+  
+  /* ads */
+  .ads-wrap{overflow:hidden;border-radius:12px}
+  .ads{display:flex;gap:12px;padding:10px;transform:translateX(0);animation:scrollAds 18s linear infinite}
+  .ads .ad{min-width:220px;background:#fff;padding:8px;border-radius:10px;box-shadow:0 8px 18px rgba(0,0,0,0.04)}
+  @keyframes scrollAds{0%{transform:translateX(0)}50%{transform:translateX(-40%)}100%{transform:translateX(0)}}
+  
+  /* featured */
+  .carousel{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
+  .prop-card{background:var(--card);min-width:240px;border-radius:12px;overflow:hidden;box-shadow:0 12px 28px rgba(10,20,60,0.06);position:relative}
+  .prop-card .imgwrap{height:140px;background:#eee}
+  .prop-card .imgwrap img{width:100%;height:100%;object-fit:cover}
+  .fav-btn{position:absolute;right:10px;top:10px;background:rgba(255,255,255,0.9);padding:8px;border:none;border-radius:8px;font-size:18px;cursor:pointer}
+  .fav-btn.active{color:var(--accent);transform:scale(1.05)}
+  
+  /* list */
+  .list{display:grid;gap:10px}
+  .list-card{display:flex;gap:10px;background:var(--card);padding:10px;border-radius:12px;align-items:center}
+  .thumb{width:100px;height:70px;border-radius:8px;flex-shrink:0;object-fit:cover}
+  .info{flex:1}
+  .title{font-weight:600}
+  .specs{font-size:13px;color:var(--muted)}
+
+  /* category page */
+  .category-page {display: none;padding-top:10px;}
+  .category-page.active {display: block;}
+  .category-page .list-card {flex-direction: column; align-items: stretch;}
+  .category-page .list-card .thumb {width: 100%; height: 180px; margin-bottom: 8px;}
+  .category-page .list-card .info {padding: 0 8px;}
+  .category-page .list-card .action-buttons {display: flex; gap: 8px; justify-content: space-between; padding: 8px;}
+
+  /* modal */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(4,10,20,0.45);display:none;align-items:center;justify-content:center;z-index:60;padding:12px}
+  .modal-backdrop.open{display:flex}
+  .modal{background:var(--card);border-radius:12px;max-width:720px;width:100%;max-height:90vh;overflow:auto;padding:16px}
+  
+  /* bottom & fab */
+  .bottom-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:10px;width:calc(100% - 24px);max-width:1000px;display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:linear-gradient(180deg,#fff,#f9fbff);border-radius:12px;box-shadow:0 20px 40px rgba(10,20,60,0.12);z-index:50}
+  .nav-btn{display:flex;flex-direction:column;align-items:center;font-size:12px;color:var(--muted);cursor:pointer}
+  .nav-btn.active{color:var(--primary)}
+  .fab{position:fixed;right:20px;bottom:72px;width:56px;height:56px;border-radius:14px;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;box-shadow:0 12px 28px rgba(11,108,246,0.22);cursor:pointer;z-index:70}
+  
+  /* small helpers */
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .row select, .row input {flex:1; min-width: 100px; padding:8px; border-radius:8px; border:1px solid #e6eefc;}
+  .btn{padding:8px 12px;border-radius:10px;border:none;cursor:pointer}
+  .btn.primary{background:var(--primary);color:white}
+  .btn.ghost{background:transparent;border:1px solid #e6eefc}
+  .small{font-size:13px;color:var(--muted)}
+  .muted{color:var(--muted)}
+  .label{font-size:13px;color:#475569;margin-bottom:6px}
+  .thumb-preview{width:70px;height:70px;border-radius:8px;object-fit:cover;margin-right:6px}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:140px;background:#111;color:#fff;padding:10px 14px;border-radius:10px;z-index:80;display:none}
+  .toast.show{display:block;animation:fadein .35s}
+  @keyframes fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+  /* Biodata Styles (for detail modal) */
+  .detail-biodata {
+    padding: 10px;
+    border-radius: 12px;
+    background: var(--card);
+    box-shadow: 0 8px 18px rgba(12,24,60,0.04);
+    margin-top: 15px;
+  }
+  .detail-biodata ul {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+  }
+  .detail-biodata li {
+    background: #f9fbfd;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #e6eefc;
+  }
+  .contact-buttons-modal {
+    margin-top: 20px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+  .contact-buttons-modal a {
+    text-decoration: none;
+  }
+  .contact-buttons-modal .btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 0 8px;
+  }
+  .contact-buttons-modal .btn.primary {
+    background: var(--primary);
+    color: white;
+  }
+  .contact-buttons-modal .btn.whatsapp {
+    background: #25D366;
+    color: white;
+  }
+  
+  /* Upload Modal Enhancements */
+  #addModal .modal {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+  }
+  #addModal h3 {
+      text-align: center;
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+  }
+  #addForm .row {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+  }
+  #addForm .row > div {
+      flex: 1;
+      min-width: 150px;
+  }
+  #addForm input, #addForm select, #addForm textarea {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #e6eefc;
+      font-size: 14px;
+      background: #f9fbfd;
+  }
+  #addForm textarea {
+      resize: vertical;
+  }
+  #addForm .label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: #475569;
+  }
+  #addForm .form-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+  }
+  #addForm .btn {
+      flex: 1;
+      padding: 12px;
+      font-size: 16px;
+  }
+  #addForm .btn.primary {
+      background-color: var(--primary);
+      color: white;
+  }
+  #addForm .btn.ghost {
+      background-color: transparent;
+      border: 1px solid #e6eefc;
+      color: var(--muted);
+  }
+
+  /* Updated CSS for Modern File Upload Button */
+  .upload-btn-wrapper {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+  }
+  .upload-btn-wrapper button.btn {
+    padding: 10px 14px;
+    border: 1px solid #e6eefc;
+    background: #f9fbfd;
+    color: var(--primary);
+    cursor: pointer;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+  .upload-btn-wrapper input[type=file] {
+    font-size: 100px;
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  /* Responsive Adjustments */
+  @media(max-width: 480px) {
+    /* **UPDATED**: Fix for mobile to ensure both are in a row */
+    .search-filter-row {
+      display: flex;
+      flex-direction: row; /* Ensure row layout */
+      flex-wrap: wrap;
+    }
+    .search-input-wrapper {
+      flex: 1;
+      min-width: 150px;
+    }
+    .search-input-wrapper input[type="text"] {
+      min-width: auto;
+      position: static;
+      padding-right: 14px;
+      width: 100%;
+    }
+    .filter-row {
+      flex-direction: row;
+    }
+    .filter-row .select-btn {
+      flex: 1;
+      min-width: auto;
+      width: auto;
+    }
+    .row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .row select, .row input {
+      width: 100%;
+    }
+    .list-card .info {
+      font-size: 14px;
+    }
+    .list-card .title {
+      font-size: 16px;
+    }
+    #biodata-container ul {
+      grid-template-columns: 1fr;
+    }
+    /* **UPDATED**: Panel position fixed for mobile */
+    #cascadingPanel {
+      left: 12px;
+      right: 12px;
+      padding: 12px;
+      top: calc(100% + 8px);
+    }
+    /* **UPDATED**: Add a border to the bottom bar */
+    .bottom-bar:before {
+      content: '';
+      position: absolute;
+      top: -1px; /* Position it just above the bar */
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #e6eefc; /* Same color as search bar border */
+    }
+  }
+
+  @media(min-width: 481px) {
+    /* **UPDATED**: Search and filter on one row for larger screens */
+    .search-card {
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
+      align-items: center;
+      padding: 10px;
+    }
+    .search-filter-row {
+      display: contents; /* This makes the children behave as direct children of search-card */
+    }
+    .search-input-wrapper {
+      flex: 1;
+      order: 1;
+    }
+    /* UPDATED: `stateSelectBtn` class is no longer inside `.filter-row` */
+    .stateSelectBtn {
+      order: 2;
+    }
+    #cascadingPanel {
+      width: 400px;
+      right: 0; /* Align to the right of the search card */
+      left: auto;
+      top: 100%;
+    }
+  }
+
+  @media(min-width:720px){
+    .icon-grid{grid-template-columns:repeat(8,1fr)}.app{padding:18px}
+  }
+</style>
+</head>
+<body>
+  <div class="app" id="app">
+
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo">PB</div>
+        <div>
+          <h1>Plot Bazaar</h1>
+          <div class="small">Modern Property Marketplace — Live</div>
+        </div>
+      </div>
+
+      <div class="more-btn">
+        <div class="three-dots" id="openMenuBtn" title="More options">
+          <i class="fas fa-ellipsis-v"></i>
+        </div>
+
+        <div class="menu" id="moreMenu">
+          <div class="item" data-action="home"><i class="fas fa-home"></i><div>Home Page</div></div>
+          <div class="item" data-action="favorites"><i class="fas fa-heart"></i><div>My Favorite property</div></div>
+          <div class="item" data-action="desktop-toggle"><i class="fas fa-desktop"></i><div>Use desktop mode</div></div>
+          <div class="item" data-action="recent"><i class="fas fa-history"></i><div>Recent tabs</div></div>
+          <div class="item" data-action="share"><i class="fas fa-share-alt"></i><div>Share</div></div>
+          <div class="item" data-action="refresh"><i class="fas fa-sync"></i><div>Refresh</div></div>
+          <div class="item" data-action="tnc"><i class="fas fa-file-alt"></i><div>Terms and Conditions</div></div>
+          <div class="item" data-action="add"><i class="fas fa-plus-circle"></i><div>Add Your property</div></div>
+          <div class="item" data-action="logout"><i class="fas fa-sign-out-alt"></i><div>Log out</div></div>
+        </div>
+      </div>
+    </header>
+
+    <main id="homeContent">
+      <section class="search-card" id="searchCard">
+        <div class="search-filter-row">
+            <div class="search-input-wrapper">
+                <input type="text" id="searchInput" placeholder="Search properties" />
+                <i class="fas fa-search search-icon"></i>
+            </div>
+            <div class="stateSelectBtn" id="stateSelectBtn">
+                <span class="state-badge">All India</span> <i class="fas fa-chevron-down" style="font-size:12px;color:var(--muted)"></i>
+            </div>
+        </div>
+        
+        <div id="cascadingPanel">
+            <div class="select-wrapper">
+                <label for="countrySelect">Country</label>
+                <select id="countrySelect"><option value="India">India</option></select>
+            </div>
+            <div class="select-wrapper">
+                <label for="stateSelect">State</label>
+                <select id="stateSelect"></select>
+            </div>
+            <div class="select-wrapper">
+                <label for="districtSelect">District</label>
+                <select id="districtSelect"></select>
+            </div>
+            <div class="actions">
+              <button class="btn primary" id="applyLocation">Apply</button>
+              <button class="btn ghost" id="clearLocation">Clear</button>
+            </div>
+        </div>
+      </section>
+
+      <section><div class="icon-grid" id="iconGrid"></div></section>
+
+      <section class="ads-wrap"><div class="ads" id="ads"><div class="ad"><strong>Ad 1</strong><p>Best land deals near you.</p></div><div class="ad"><strong>Ad 2</strong><p>Luxury villas for sale.</p></div><div class="ad"><strong>Ad 3</strong><p>Commercial shops at prime locations.</p></div></div></section>
+
+      <section><h3>Featured Properties</h3><div class="carousel" id="featuredCarousel"></div></section>
+
+      <section><h3>Latest Properties</h3><div class="list" id="latestList"></div></section>
+    </main>
+    
+    <main id="biodata-view" style="display: none;">
+        <div class="biodata-container" id="biodata-container">
+            </div>
+    </main>
+
+    <main id="categoryPage" class="category-page">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+        <button id="categoryBackBtn" class="btn ghost"><i class="fas fa-arrow-left"></i> Back</button>
+        <h3 id="categoryTitle" style="margin:0;"></h3>
+      </div>
+      <div class="list" id="categoryList"></div>
+    </main>
+
+  </div>
+
+  <div class="fab" id="fabAdd" title="Add Property"><i class="fas fa-plus"></i></div>
+
+  <nav class="bottom-bar">
+    <div class="nav-btn" data-nav="home"><i class="fas fa-home" style="font-size:18px"></i><div>Home</div></div>
+    <div class="nav-btn" data-nav="search"><i class="fas fa-search" style="font-size:18px"></i><div>Search</div></div>
+    <div class="nav-btn" data-nav="fav"><i class="fas fa-heart" style="font-size:18px"></i><div>Favourite</div></div>
+  </nav>
+
+  <div class="modal-backdrop" id="detailModal"><div class="modal" role="dialog" aria-modal="true"><button class="btn" id="closeDetail">Close</button><div id="detailContent"></div></div></div>
+
+  <div class="modal-backdrop" id="addModal">
+    <div class="modal">
+      <h3>Add Your Property</h3>
+      <form id="addForm">
+        <div>
+          <label class="label">Seller Name</label>
+          <input id="sellerName" required placeholder="Your name" />
+        </div>
+        
+        <div style="margin-top:8px">
+          <label class="label">I am a/an</label>
+          <div style="display:flex; gap:15px;">
+            <label style="font-weight:400; font-size:14px; display:flex; align-items:center;"><input type="radio" name="sellerType" value="Owner" checked style="margin-right:5px;" /> Owner</label>
+            <label style="font-weight:400; font-size:14px; display:flex; align-items:center;"><input type="radio" name="sellerType" value="Agent" style="margin-right:5px;" /> Agent</label>
+          </div>
+        </div>
+
+        <div>
+          <label class="label">Mobile Number</label>
+          <input id="sellerPhone" required placeholder="Mobile Number" />
+        </div>
+        <div>
+          <label class="label">WhatsApp Number</label>
+          <input id="whatsappNumber" placeholder="WhatsApp (Optional)" />
+        </div>
+        
+        <div style="margin-top:8px"><label class="label">Address</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <select id="countryAdd"><option>India</option></select>
+            <select id="stateAdd"></select>
+            <select id="districtAdd"></select>
+          </div>
+          <textarea id="fullAddress" rows="2" placeholder="Full address / landmark" style="width:100%;margin-top:8px;padding:8px;border-radius:8px;border:1px solid #e8eefb"></textarea>
+        </div>
+
+        <div class="row">
+          <div style="flex:1"><label class="label">Property Type</label><select id="propType"></select></div>
+          <div style="flex:1">
+            <label class="label">Area</label>
+            <div style="display:flex; gap: 8px;">
+                <input id="area" placeholder="e.g. 1200" style="flex:2;" />
+                <select id="areaUnit" style="flex:1; min-width: 80px;">
+                  <option value="sqft">Sq. Ft.</option>
+                  <option value="sqm">Sq. Mt.</option>
+                  <option value="sqyard">Gaj (Sq. Yard)</option>
+                  <option value="hectare">Hectare</option>
+                  <option value="kila">Kila (Acre)</option>
+                  <option value="bigha">Bigha</option>
+                  <option value="biswa">Biswa</option>
+                  <option value="kanal">Kanal</option>
+                  <option value="marla">Marla</option>
+                  <option value="gunta">Guntha</option>
+                </select>
+            </div>
+          </div>
+          <div style="flex:1"><label class="label">Price</label><input id="price" placeholder="₹" /></div>
+        </div>
+
+        <div style="margin-top:8px">
+            <label class="label" for="propertyDescription">Property Vivaran (Description)</label>
+            <textarea id="propertyDescription" name="propertyDescription" rows="4" placeholder="Property ke baare mein vistar se batayein, jaise ki bedroom, bathroom, suvidhaein, ya koi khaas baat."></textarea>
+        </div>
+        
+        <div style="margin-top:8px">
+            <label class="label">Photos (up to 7)</label>
+            <div class="upload-btn-wrapper">
+                <button type="button" class="btn ghost">Select Photos</button>
+                <input type="file" id="photos" accept="image/*" multiple />
+            </div>
+            <div id="previews" style="display:flex;margin-top:8px;flex-wrap:wrap"></div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn primary" type="submit" id="addPropertySubmitBtn">Upload</button>
+          <button type="button" class="btn ghost" id="cancelAdd">Close</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="tncModal"><div class="modal"><h3>Terms and Conditions</h3><p style="line-height:1.5;color:var(--muted)">Demo terms. Replace with real legal text.</p><div style="text-align:right"><button class="btn" id="closeTnc">Close</button></div></div></div>
+
+  <div class="modal-backdrop" id="recentModal"><div class="modal"><h3>Recent tabs</h3><ul id="recentListSimple"></ul><div style="text-align:right"><button class="btn" id="closeRecent">Close</button></div></div></div>
+
+  <div class="toast" id="toast">Saved</div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  
+  <script>
+    /* ==================================
+       Firebase Configuration
+       ================================== */
+    const firebaseConfig = {
+      apiKey: "AIzaSyAYtF-kFeU1cAX7Vglz94W5UfTGkSpK89k",
+      authDomain: "plot-bazaar.firebaseapp.com",
+      projectId: "plot-bazaar",
+      storageBucket: "plot-bazaar.firebasestorage.app",
+      messagingSenderId: "196350323758",
+      appId: "1:196350323758:web:5d94c4716dd45f648e03bf",
+      measurementId: "G-VFXCRS3W7H"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const storage = firebase.storage();
+
+    /* Anonymous sign-in so users can upload images (enable Anonymous in Auth console) */
+    firebase.auth().onAuthStateChanged(user => {
+      if (user) {
+        console.log('auth ok', user.uid);
+      } else {
+        firebase.auth().signInAnonymously().catch(err => console.warn('auth err', err));
+      }
+    });
+
+    /* ------------------------------
+       Demo states / tehsils (used for select lists)
+       ------------------------------ */
+    const indianStatesData = {
+      "Andhra Pradesh": { "Anantapur": ["Anantapur", "Guntakal"], "Chittoor": ["Tirupati", "Madanapalle"], "East Godavari": ["Kakinada", "Rajahmundry"] },
+      "Arunachal Pradesh": { "Tawang": ["Tawang", "Lumla"], "West Kameng": ["Bomdila", "Dirang"] },
+      "Assam": { "Baksa": ["Musalpur", "Tamulpur"], "Barpeta": ["Barpeta", "Sarthebari"] },
+      "Bihar": { "Araria": ["Araria", "Forbesganj"], "Arwal": ["Arwal", "Kaler"], "Aurangabad": ["Aurangabad", "Daudnagar"] },
+      "Chhattisgarh": { "Balod": ["Balod", "Gunderdehi"], "Baloda Bazar": ["Baloda Bazar", "Bhatapara"] },
+      "Goa": { "North Goa": ["Tiswadi", "Bardez"], "South Goa": ["Mormugao", "Salcete"] },
+      "Gujarat": { "Ahmedabad": ["Ahmedabad City", "Daskroi"], "Amreli": ["Amreli", "Babra"], "Anand": ["Anand", "Borsad"] },
+      "Haryana": { "Ambala": ["Ambala", "Barara"], "Bhiwani": ["Bhiwani", "Loharu"], "Gurgaon": ["Gurgaon", "Sohna", "Manesar"] },
+      "Himachal Pradesh": { "Bilaspur": ["Bilaspur Sadar", "Ghumarwin"], "Chamba": ["Chamba", "Dalhousie"] },
+      "Jammu and Kashmir": { "Anantnag": ["Anantnag", "Dooru"], "Bandipora": ["Bandipora", "Sonawari"] },
+      "Jharkhand": { "Bokaro": ["Bokaro", "Chandankiyari"], "Chatra": ["Chatra", "Simaria"] },
+      "Karnataka": { "Bengaluru Urban": ["Bengaluru North", "Bengaluru South"], "Mysuru": ["Mysuru", "Hunsur"], "Hubballi-Dharwad": ["Hubballi", "Dharwad"] },
+      "Kerala": { "Alappuzha": ["Ambalappuzha", "Chengannur"], "Ernakulam": ["Kanayannur", "Aluva"] },
+      "Madhya Pradesh": { "Bhopal": ["Bhopal", "Huzur"], "Indore": ["Indore", "Mhow"] },
+      "Maharashtra": { "Mumbai City": ["Mumbai North", "Mumbai South"], "Pune": ["Pune City", "Maval", "Hinjewadi"], "Nagpur": ["Nagpur City", "Kamptee"] },
+      "Manipur": { "Bishnupur": ["Bishnupur", "Nambol"] },
+      "Meghalaya": { "East Garo Hills": ["Williamnagar", "Samanda"] },
+      "Mizoram": { "Aizawl": ["Aizawl", "Tlangnuam"] },
+      "Nagaland": { "Dimapur": ["Dimapur Sadar", "Dhansiripar"] },
+      "Odisha": { "Angul": ["Angul", "Athamallik"] },
+      "Punjab": { "Amritsar": ["Amritsar I", "Amritsar II"], "Bathinda": ["Bathinda", "Talwandi Sabo"] },
+      "Rajasthan": { "Jaipur": ["Jaipur", "Sanganer", "Malviya Nagar"], "Jodhpur": ["Jodhpur", "Osian"], "Udaipur": ["Udaipur", "Girwa"] },
+      "Sikkim": { "East Sikkim": ["Gangtok", "Pakyong"] },
+      "Tamil Nadu": { "Chennai": ["Chennai", "Mylapore", "Guindy"], "Coimbatore": ["Coimbatore North", "Coimbatore South"] },
+      "Telangana": { "Adilabad": ["Adilabad", "Boath"] },
+      "Tripura": { "Dhalai": ["Kamalpur", "Gandacherra"] },
+      "Uttar Pradesh": { "Agra": ["Agra", "Etmadpur"], "Aligarh": ["Aligarh", "Khair"], "Lucknow": ["Lucknow", "Mohanlalganj", "Indira Nagar"] },
+      "Uttarakhand": { "Almora": ["Almora", "Ranikhet"], "Chamoli": ["Chamoli", "Ghat"] },
+      "West Bengal": { "Alipurduar": ["Alipurduar", "Falakata"], "Bankura": ["Bankura Sadar", "Khatra"] }
+    };
+
+    /* ------------------------------
+       Data for Icons and their Categories
+       ------------------------------ */
+    const iconsData = [
+      { id: 'plot', name: "Plot", image: "https://images.unsplash.com/photo-1508780709619-79562169bc64?w=400&q=80", shortDetail: "Plots available for sale and rent.", category: "Plot" },
+      { id: 'villa', name: "Villa", image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&q=80", shortDetail: "Luxurious villas with modern amenities.", category: "Villa" },
+      { id: 'commercial', name: "Commercial", image: "https://images.unsplash.com/photo-1559526324-593bc073d938?w=400&q=80", shortDetail: "Commercial shops and offices for sale.", category: "Commercial" },
+      { id: 'flat', name: "Flat", image: "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=400&q=80", shortDetail: "Modern flats in residential societies.", category: "Flat" },
+      { id: 'village-land', name: "Village Land", image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400&q=80", shortDetail: "Rural lands suitable for farming and cottages.", category: "Village Land" },
+      { id: 'shop', name: "Shop", image: "https://images.unsplash.com/photo-1542831371-d531d36971e6?w=400&q=80", shortDetail: "Shops in commercial hubs.", category: "Shop" },
+      { id: 'house', name: "House", image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&q=80", shortDetail: "Independent houses for families.", category: "House" },
+      { id: 'rental', name: "Rental", image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&q=80", shortDetail: "Flats and houses available for rent.", category: "Rental" }
+    ];
+    
+    // REMOVED: All dummy data arrays (`dummyProperties`, `morePlots`, etc.)
+    let allProperties = []; // Initialize as an empty array
+
+    function getBiodata(prop) {
+        if (!prop) return {};
+        // Dynamically generate biodata for a property
+        return {
+            "Property ID": `PB-DEMO-${prop.id.toUpperCase()}`,
+            "Property Type": prop.type || "Not specified",
+            "Area": `${prop.area || 'N/A'} ${prop.areaUnit || 'Sq. Ft.'}`,
+            "Price": `₹ ${prop.price ? prop.price.toLocaleString('en-IN') : 'N/A'}`,
+            "Location": `${prop.fullAddress || 'N/A'}, ${prop.district || 'N/A'}, ${prop.state || 'N/A'}`,
+            "Description": prop.description || "No description provided.", // NEW
+            "Posted By": prop.sellerType || "Owner",
+            "Contact": prop.contact || "N/A",
+            "WhatsApp": prop.whatsapp || "N/A",
+            "Posted On": prop.createdAt ? new Date(prop.createdAt).toLocaleDateString() : "N/A",
+        };
+    }
+
+    /* ------------------------------
+       Utility: toast
+       ------------------------------ */
+    const toastEl = document.getElementById('toast');
+    function showToast(msg, t = 1600) {
+      toastEl.textContent = msg;
+      toastEl.classList.add('show');
+      setTimeout(() => toastEl.classList.remove('show'), t);
+    }
+
+    /* ------------------------------
+       Realtime: listen to /properties node
+       ------------------------------ */
+    const propertiesRef = db.ref('properties');
+    
+    propertiesRef.on('value', snap => {
+        const firebaseProperties = snap.val() || {};
+        allProperties = Object.keys(firebaseProperties).map(k => ({ id: k, ...firebaseProperties[k] })).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        
+        // Re-render everything with the new combined list
+        renderFeatured();
+        renderLatest();
+        renderRecentSimple();
+        updateFavUI();
+    });
+
+    /* ------------------------------
+       Populate selects
+       ------------------------------ */
+    const stateSelect = document.getElementById('stateSelect');
+    const districtSelect = document.getElementById('districtSelect');
+    const stateAdd = document.getElementById('stateAdd');
+    const districtAdd = document.getElementById('districtAdd');
+    const propTypeAdd = document.getElementById('propType');
+    const stateSelectBtn = document.getElementById('stateSelectBtn');
+    const cascadingPanel = document.getElementById('cascadingPanel');
+
+    function populateStateSelect(selectEl) {
+      selectEl.innerHTML = '<option value="">--Select State--</option>';
+      const states = Object.keys(indianStatesData);
+      states.forEach(s => {
+        let o = document.createElement('option');
+        o.value = s;
+        o.textContent = s;
+        selectEl.appendChild(o);
+      });
+    }
+
+    function populateDistrictSelect(state, distEl) {
+      distEl.innerHTML = '<option value="">--District--</option>';
+      if (!state || !indianStatesData[state]) return;
+      const districts = Object.keys(indianStatesData[state]);
+      districts.forEach(d => {
+        let o = document.createElement('option');
+        o.value = d;
+        o.textContent = d;
+        distEl.appendChild(o);
+      });
+    }
+    
+    // NEW: Populate Property Type with all iconsData categories
+    function populatePropTypeSelect() {
+        propTypeAdd.innerHTML = '<option value="">--Select Type--</option>';
+        iconsData.forEach(ic => {
+            let o = document.createElement('option');
+            o.value = ic.category;
+            o.textContent = ic.category;
+            propTypeAdd.appendChild(o);
+        });
+    }
+
+
+    populateStateSelect(stateSelect);
+    populateStateSelect(stateAdd);
+    populatePropTypeSelect();
+
+    stateSelect.addEventListener('change', (e) => {
+      const selectedState = e.target.value;
+      populateDistrictSelect(selectedState, districtSelect);
+    });
+
+    // UPDATED: Filter on state/district change
+    stateSelect.addEventListener('change', (e) => {
+      const selectedState = e.target.value;
+      populateDistrictSelect(selectedState, districtSelect);
+    });
+
+    document.getElementById('applyLocation').addEventListener('click', () => {
+        const selectedState = stateSelect.value;
+        const selectedDistrict = districtSelect.value;
+        document.querySelector('.state-badge').textContent = selectedDistrict || selectedState || 'All India';
+        cascadingPanel.classList.remove('open');
+        filterAndRenderLatest();
+    });
+
+    document.getElementById('clearLocation').addEventListener('click', () => {
+        stateSelect.value = '';
+        populateDistrictSelect('', districtSelect);
+        document.querySelector('.state-badge').textContent = 'All India';
+        cascadingPanel.classList.remove('open');
+        filterAndRenderLatest();
+    });
+
+    stateAdd.addEventListener('change', (e) => {
+      const selectedState = e.target.value;
+      populateDistrictSelect(selectedState, districtAdd);
+    });
+
+    function filterAndRenderLatest() {
+        const selectedState = stateSelect.value;
+        const selectedDistrict = districtSelect.value;
+        
+        let filteredList = allProperties;
+
+        if (selectedState) {
+            filteredList = filteredList.filter(p => p.state === selectedState);
+        }
+        if (selectedDistrict) {
+            filteredList = filteredList.filter(p => p.district === selectedDistrict);
+        }
+        
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        if (searchTerm) {
+            filteredList = filteredList.filter(p => 
+                (p.title || '').toLowerCase().includes(searchTerm) || 
+                (p.state || '').toLowerCase().includes(searchTerm) || 
+                (p.district || '').toLowerCase().includes(searchTerm)
+            );
+        }
+
+        renderList(filteredList, latestList);
+    }
+    
+    // UPDATED: Search input now triggers filter on Enter key or search icon click
+    document.getElementById('searchInput').addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') {
+            filterAndRenderLatest();
+        }
+    });
+
+    document.querySelector('.search-icon').addEventListener('click', () => {
+        filterAndRenderLatest();
+    });
+
+
+    /* ------------------------------
+       Icon grid (with real-looking images from Unsplash)
+       ------------------------------ */
+    const iconGrid = document.getElementById('iconGrid');
+
+    function renderIcons() {
+        iconGrid.innerHTML = '';
+        iconsData.forEach(ic => {
+            const el = document.createElement('div');
+            el.className = 'icon-card';
+            const shortDetailText = ic.shortDetail ? `<p style="font-size: 11px; color: var(--muted); margin: 4px 0 0;">${ic.shortDetail}</p>` : '';
+            el.innerHTML = `
+                <img src="${ic.image}" alt="${ic.name} Icon" />
+                <small>${ic.name}</small>
+                ${shortDetailText}
+            `;
+            el.addEventListener('click', () => openCategoryPage(ic.category, ic.name));
+            iconGrid.appendChild(el);
+        });
+    }
+    
+    // Category page navigation
+    const homeContent = document.getElementById('homeContent');
+    const categoryPage = document.getElementById('categoryPage');
+    const categoryTitle = document.getElementById('categoryTitle');
+    const categoryList = document.getElementById('categoryList');
+    const categoryBackBtn = document.getElementById('categoryBackBtn');
+
+    function openCategoryPage(typeKey, title) {
+      homeContent.style.display = 'none';
+      categoryPage.style.display = 'block';
+      categoryTitle.textContent = `${title} Properties`;
+      const filtered = allProperties.filter(p => (p.type || '') === typeKey);
+      renderList(filtered, categoryList, true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
+    function closeCategoryPage() {
+      homeContent.style.display = 'block';
+      categoryPage.style.display = 'none';
+      renderLatest(); // Reload original latest list
+      updateNavActive('home');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    categoryBackBtn.addEventListener('click', closeCategoryPage);
+
+    /* ------------------------------
+       Render properties
+       ------------------------------ */
+    const featuredCarousel = document.getElementById('featuredCarousel');
+    const latestList = document.getElementById('latestList');
+
+    function renderFeatured() {
+      featuredCarousel.innerHTML = '';
+      allProperties.filter(p => p.featured).slice(0, 10).forEach(p => {
+        const c = document.createElement('div');
+        c.className = 'prop-card';
+        const imgUrl = (p.images && p.images.length) ? p.images[0] : `https://images.unsplash.com/photo-1505691723518-36a5ac3be353?w=800&q=80`;
+        c.innerHTML = `
+          <div class="imgwrap"><img src="${imgUrl}" alt="${p.title || 'Property'}"/></div>
+          <button class="fav-btn" data-id="${p.id}"><i class="fas fa-heart"></i></button>
+          <div class="content"><div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="max-width:140px"><strong>${escapeHtml(p.title || 'Untitled')}</strong><div class="muted">${escapeHtml(p.district || '')}, ${escapeHtml(p.state || '')}</div></div>
+            <div style="text-align:right"><div style="font-weight:700">₹${((p.price || 0) / 100000).toFixed(1)}L</div><div class="small">${p.area || ''} sqft</div></div>
+          </div></div>
+        `;
+        // UPDATED: Now all cards open the same detail modal
+        c.querySelector('.imgwrap').addEventListener('click', () => openDetail(p.id));
+        c.querySelector('.fav-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleFavorite(p.id, e.currentTarget);
+        });
+        featuredCarousel.appendChild(c);
+      });
+    }
+
+    function renderList(list, targetElement, isCategoryPage = false) {
+      targetElement.innerHTML = '';
+      if (list.length === 0) {
+        targetElement.innerHTML = '<p style="text-align:center; color:var(--muted); margin-top:20px;">No properties found.</p>';
+        return;
+      }
+      list.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'list-card';
+        const imgUrl = (p.images && p.images.length) ? p.images[0] : `https://images.unsplash.com/photo-1494526585095-c41746248156?w=800&q=80`;
+        card.innerHTML = `
+          <img class="thumb" src="${imgUrl}" alt="${p.title || 'Property'}" />
+          <div class="info">
+            <div class="title">${escapeHtml(p.title || 'No title')}</div>
+            <div class="muted">${escapeHtml(p.district || '')}, ${escapeHtml(p.state || '')}</div>
+            <div class="specs">₹${((p.price || 0) / 100000).toFixed(1)}L • ${p.area || ''} ${p.areaUnit || 'sqft'} • ${escapeHtml(p.type || '')}</div>
+          </div>
+          <div class="action-buttons">
+            <button class="btn fav-small" data-id="${p.id}"><i class="fas fa-heart"></i></button>
+            <button class="btn primary" data-id="${p.id}">Visit Now</button>
+          </div>
+        `;
+        
+        // UPDATED: Both thumb and "Visit Now" button now open the detail modal
+        card.querySelector('.thumb').addEventListener('click', () => openDetail(p.id));
+        card.querySelector('.primary').addEventListener('click', () => openDetail(p.id));
+        
+        card.querySelector('.fav-small').addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleFavorite(p.id, e.currentTarget);
+        });
+        targetElement.appendChild(card);
+      });
+    }
+
+    function renderLatest(list = allProperties) {
+      renderList(list, latestList);
+    }
+
+    /* ------------------------------
+       Favorites (localStorage)
+       ------------------------------ */
+    function getFavorites() {
+      return JSON.parse(localStorage.getItem('pb_favs') || '[]');
+    }
+
+    function setFavorites(a) {
+      localStorage.setItem('pb_favs', JSON.stringify(a));
+      updateFavUI();
+    }
+
+    function toggleFavorite(id, btnEl) {
+      let favs = getFavorites();
+      if (favs.includes(id)) {
+        favs = favs.filter(x => x !== id);
+        showToast('Removed from favorites');
+        btnEl.classList.remove('active');
+      } else {
+        favs.push(id);
+        showToast('Added to favorites');
+        btnEl.classList.add('active');
+      }
+      setFavorites(favs);
+    }
+
+    function updateFavUI() {
+      const favs = getFavorites();
+      document.querySelectorAll('.fav-btn, .fav-small').forEach(b => {
+        const id = b.dataset.id;
+        if (!id) return;
+        if (favs.includes(id)) b.classList.add('active');
+        else b.classList.remove('active');
+      });
+    }
+
+    /* ------------------------------
+       Detail modal & recent tabs
+       ------------------------------ */
+    const detailModal = document.getElementById('detailModal'),
+      detailContent = document.getElementById('detailContent');
+
+    function openDetail(id) {
+      const prop = allProperties.find(x => x.id === id);
+      if (!prop) return;
+      
+      // Get full biodata for the pop-up
+      const biodata = getBiodata(prop);
+      
+      // store recent
+      let rec = JSON.parse(localStorage.getItem('pb_recent') || '[]');
+      rec = rec.filter(x => x !== id);
+      rec.unshift(id);
+      if (rec.length > 5) rec.pop();
+      localStorage.setItem('pb_recent', JSON.stringify(rec));
+      renderRecentSimple();
+      
+      const imgUrl = (prop.images && prop.images.length) ? prop.images[0] : `https://images.unsplash.com/photo-1505691723518-36a5ac3be353?w=900&q=80`;
+      
+      const whatsappButton = prop.whatsapp ? `<a class="btn whatsapp" href="https://wa.me/${escapeHtml(prop.whatsapp).replace('+', '')}" target="_blank" style="background:#25D366; color:white;"><i class="fab fa-whatsapp"></i> WhatsApp</a>` : '';
+
+      // UPDATED: Detail modal content with full biodata, call and whatsapp buttons
+      let biodataHtml = `
+          <div class="detail-biodata">
+              <h3>Property Details</h3>
+              <ul>`;
+      for (const [key, value] of Object.entries(biodata)) {
+        // Exclude Contact and WhatsApp from the list as they have dedicated buttons
+        if (key === 'Contact' || key === 'WhatsApp' || !value || value === 'N/A') continue;
+        biodataHtml += `<li><strong>${key}:</strong> ${value}</li>`;
+      }
+      biodataHtml += `</ul></div>`;
+      
+      detailContent.innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;align-items:center;gap:12px"><h3 style="margin:0">${escapeHtml(prop.title || 'Untitled')}</h3><button class="btn" id="detailFav"><i class="fas fa-heart"></i></button><div style="margin-left:auto;font-weight:700">₹${((prop.price || 0) / 100000).toFixed(1)}L</div></div>
+          <img src="${imgUrl}" style="width:100%;height:260px;object-fit:cover;border-radius:10px"/>
+          ${biodataHtml}
+          <div class="contact-buttons-modal">
+            <a class="btn primary" href="tel:${escapeHtml(prop.contact || '+91')}" ><i class="fas fa-phone"></i> Call Now</a>
+            ${whatsappButton}
+          </div>
+        </div>
+      `;
+      document.getElementById('detailFav').addEventListener('click', () => toggleFavorite(prop.id, document.getElementById('detailFav')));
+      detailModal.classList.add('open');
+    }
+
+    /* ------------------------------
+       Share util
+       ------------------------------ */
+    function shareLink(title, url) {
+      if (navigator.share) {
+        navigator.share({ title, url }).catch(() => {
+          copyToClipboard(url);
+          showToast('Link copied')
+        });
+      } else {
+        copyToClipboard(url);
+        showToast('Link copied to clipboard');
+      }
+    }
+
+    function copyToClipboard(t) {
+      navigator.clipboard?.writeText(t).catch(() => {});
+    }
+
+    /* ------------------------------
+       Add Property: upload images to Firebase Storage then push record to Realtime DB
+       ------------------------------ */
+    const addModal = document.getElementById('addModal');
+    document.getElementById('fabAdd').addEventListener('click', openAddModal);
+    document.querySelector('[data-action="add"]').addEventListener('click', openAddModal);
+
+    function openAddModal() {
+      addModal.classList.add('open');
+    }
+
+    document.getElementById('cancelAdd').addEventListener('click', () => addModal.classList.remove('open'));
+    document.getElementById('closeDetail').addEventListener('click', () => detailModal.classList.remove('open'));
+    document.getElementById('closeTnc').addEventListener('click', () => document.getElementById('tncModal').classList.remove('open'));
+    document.getElementById('closeRecent').addEventListener('click', () => document.getElementById('recentModal').classList.remove('open'));
+
+
+    // **Amended JavaScript for Photo Previews**
+    const photosInput = document.getElementById('photos'),
+      previews = document.getElementById('previews');
+    photosInput.addEventListener('change', (ev) => {
+      previews.innerHTML = '';
+      const files = Array.from(ev.target.files).slice(0, 7);
+      files.forEach(f => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = document.createElement('img');
+          img.className = 'thumb-preview';
+          img.src = e.target.result;
+          previews.appendChild(img);
+        };
+        reader.readAsDataURL(f);
+      });
+    });
+
+    document.getElementById('addForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('sellerName').value.trim();
+      const sellerType = document.querySelector('input[name="sellerType"]:checked').value; // NEW
+      const phone = document.getElementById('sellerPhone').value.trim();
+      const whatsapp = document.getElementById('whatsappNumber').value.trim();
+      const state = document.getElementById('stateAdd').value || '';
+      const district = document.getElementById('districtAdd').value || '';
+      const fullAddress = document.getElementById('fullAddress').value.trim();
+      const type = document.getElementById('propType').value;
+      const area = document.getElementById('area').value;
+      const areaUnit = document.getElementById('areaUnit').value; // NEW
+      const price = Number(document.getElementById('price').value) || 0;
+      const description = document.getElementById('propertyDescription').value.trim(); // NEW
+      const files = Array.from(photosInput.files).slice(0, 7);
+      const submitBtn = document.getElementById('addPropertySubmitBtn');
+
+      if (!name || !phone || !state || !district || !type || !area || !price) {
+          showToast('Please fill all required fields.');
+          return;
+      }
+      
+      submitBtn.textContent = 'Uploading...';
+      submitBtn.disabled = true;
+
+      showToast('Uploading images...');
+      const uploadedUrls = [];
+      try {
+        for (let i = 0; i < files.length; i++) {
+          const f = files[i];
+          const storageRef = storage.ref().child(`properties/${Date.now()}_${Math.random().toString(36).substr(2,6)}_${f.name}`);
+          const snap = await storageRef.put(f);
+          const url = await snap.ref.getDownloadURL();
+          uploadedUrls.push(url);
+        }
+      } catch (err) {
+        console.error('upload err', err);
+        showToast('Image upload failed');
+        submitBtn.textContent = 'Upload';
+        submitBtn.disabled = false;
+        return;
+      }
+
+      // push property record
+      const newRef = propertiesRef.push();
+      const payload = {
+        title: `${type} by ${name}`,
+        sellerType, // NEW
+        contact: phone,
+        whatsapp,
+        fullAddress,
+        state,
+        district,
+        type,
+        area,
+        areaUnit, // NEW
+        price,
+        description, // NEW
+        images: uploadedUrls,
+        featured: false,
+        createdAt: firebase.database.ServerValue.TIMESTAMP // Use server timestamp for accuracy
+      };
+      await newRef.set(payload);
+      showToast('Property added (live)');
+      addModal.classList.remove('open');
+      document.getElementById('addForm').reset();
+      previews.innerHTML = '';
+      submitBtn.textContent = 'Upload';
+      submitBtn.disabled = false;
+    });
+
+    /* ------------------------------
+       Menu actions
+       ------------------------------ */
+    const moreMenu = document.getElementById('moreMenu'),
+      openMenuBtn = document.getElementById('openMenuBtn');
+    openMenuBtn.addEventListener('click', () => moreMenu.classList.toggle('open'));
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.more-btn')) moreMenu.classList.remove('open');
+    });
+
+    document.querySelectorAll('.menu .item').forEach(it => it.addEventListener('click', () => {
+      const action = it.dataset.action;
+      moreMenu.classList.remove('open');
+      if (action === 'home') {
+        closeCategoryPage();
+      } else if (action === 'favorites') {
+        openCategoryPage('favorites', 'My Favorite');
+        renderList(allProperties.filter(p => getFavorites().includes(p.id)), categoryList, true);
+      } else if (action === 'desktop-toggle') {
+        document.body.classList.toggle('desktop-mode');
+        showToast('Toggled desktop mode');
+      } else if (action === 'recent') {
+        document.getElementById('recentModal').classList.add('open');
+      } else if (action === 'share') {
+        shareLink('Plot Bazaar', location.href);
+      } else if (action === 'refresh') {
+        location.reload();
+      } else if (action === 'tnc') {
+        document.getElementById('tncModal').classList.add('open');
+      } else if (action === 'add') {
+        openAddModal();
+      } else if (action === 'logout') {
+        localStorage.removeItem('pb_favs');
+        showToast('Logged out');
+        updateFavUI();
+      }
+    }));
+
+    /* Recent list */
+    function renderRecentSimple() {
+      const list = JSON.parse(localStorage.getItem('pb_recent') || '[]');
+      const el = document.getElementById('recentListSimple');
+      el.innerHTML = '';
+      if (list.length === 0) el.innerHTML = '<li class="muted">No recent</li>';
+      list.forEach(id => {
+        const p = allProperties.find(x => x.id === id);
+        const li = document.createElement('li');
+        li.style.padding = '6px 0';
+        li.innerHTML = `<a href="#" data-id="${id}">${p ? p.title : id}</a>`;
+        li.querySelector('a').addEventListener('click', (ev) => {
+          ev.preventDefault();
+          openDetail(id);
+          document.getElementById('recentModal').classList.remove('open');
+        });
+        el.appendChild(li);
+      });
+    }
+
+    /* cascading panel toggle */
+    stateSelectBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      cascadingPanel.classList.toggle('open');
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#searchCard')) {
+            cascadingPanel.classList.remove('open');
+        }
+    });
+
+    /* search */
+    document.getElementById('searchInput').addEventListener('keyup', (e) => {
+        filterAndRenderLatest();
+    });
+
+    document.querySelector('.search-icon').addEventListener('click', () => {
+        filterAndRenderLatest();
+    });
+
+    /* bottom nav */
+    function updateNavActive(activeNav) {
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.querySelector(`.nav-btn[data-nav="${activeNav}"]`);
+      if (activeBtn) activeBtn.classList.add('active');
+    }
+
+    document.querySelectorAll('.nav-btn').forEach(n => n.addEventListener('click', () => {
+      const nav = n.dataset.nav;
+      if (nav === 'home') {
+        closeCategoryPage();
+        updateNavActive(nav);
+      }
+      if (nav === 'search') {
+        window.scrollTo({
+          top: document.getElementById('searchCard').offsetTop,
+          behavior: 'smooth'
+        });
+        updateNavActive(nav);
+      }
+      if (nav === 'fav') {
+        openCategoryPage('favorites', 'My Favorite');
+        renderList(allProperties.filter(p => getFavorites().includes(p.id)), categoryList, true);
+        updateNavActive(nav);
+      }
+    }));
+
+    // Initial load
+    document.addEventListener('DOMContentLoaded', () => {
+        renderIcons();
+        updateNavActive('home');
+        closeCategoryPage();
+    });
+
+    /* helper: escapeHtml */
+    function escapeHtml(s) {
+      if (!s) return '';
+      return String(s).replace(/[&<>"']/g, function(m) {
+        return ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        })[m];
+      });
+    }
+
+    /* close modals on Escape */
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-backdrop.open').forEach(m => m.classList.remove('open'));
+      }
+    });
+
+    /* open link fragment to detail */
+    if (location.hash) {
+      const id = location.hash.replace('#', '');
+      setTimeout(() => openDetail(id), 700);
+    }
+  </script>
+
+</body>
+</html>
